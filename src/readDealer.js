@@ -1,28 +1,31 @@
+
 const fs = require('fs');
 const JSONStream = require('JSONStream');
 
 const path = '../static/dealer.json';
 
-const readDealrInfo = (internalCode) => {
-    const readStream = fs.createReadStream(path, { encoding: 'utf8' });
-    let dealerInfo ;
-    const jsonStream = JSONStream.parse('*'); // Use '*' to parse all elements in the array
+const readDealerInfo = (internalCode) => {
+    return new Promise((resolve, reject) => {
+        const readStream = fs.createReadStream(path, { encoding: 'utf8' });
+        let dealerInfo = {}; // Initialize an empty object to store the dealer info
 
-    readStream
-        .pipe(jsonStream)
-        .on('data', (data) => {
-            if (data.internalCode && data.internalCode.toLowerCase() === internalCode.toLowerCase()) {
-                dealerInfo = data;
-            }
-        })
-        .on('end', () => {
-            //console.log('Query completed.');
-        })
-        .on('error', (err) => {
-            console.error('Error:', err);
-        });
-    return dealerInfo;
+        const jsonStream = JSONStream.parse('*'); // Use '*' to parse all elements in the array
+
+        readStream
+            .pipe(jsonStream)
+            .on('data', (data) => {
+                if (data.internalCode && data.internalCode.toLowerCase() === internalCode.toLowerCase()) {
+                    //console.log('Dealer Info:', data);
+                    dealerInfo = data; // Set the dealerInfo if a match is found
+                }
+            })
+            .on('end', () => {
+                resolve(dealerInfo); // Return the dealerInfo when the stream finishes
+            })
+            .on('error', (err) => {
+                reject(err); // Reject the promise if there's an error
+            });
+    });
 };
 
-//queryJsonFile('826906');
-module.exports ={readDealrInfo}
+module.exports = {readDealerInfo};
